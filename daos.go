@@ -5,7 +5,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func createDraftDAO(d draft) error {
+func createDraftDAO(d Draft) error {
 	con, err := sql.Open("mysql", squser+":"+pwd+"@/"+database)
 	check(err)
 	defer con.Close()
@@ -14,4 +14,26 @@ func createDraftDAO(d draft) error {
 	check(err)
 
 	return nil
+}
+
+func readAllDAO(user_id int) ([]*Draft, error) {
+	con, err := sql.Open("mysql", squser+":"+pwd+"@/"+database)
+	check(err)
+	defer con.Close()
+
+	rows, err := con.Query(
+		"select draft_id, text "+
+			"from draft "+
+			"where user_id=?",
+		string(user_id))
+	check(err)
+	drafts := make([]*Draft, 0, 10)
+	var id, text string
+	for rows.Next() {
+		err = rows.Scan(&id, &text)
+		check(err)
+		drafts = append(drafts, &Draft{id, string(user_id), text})
+	}
+
+	return drafts, nil
 }

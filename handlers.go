@@ -10,7 +10,7 @@ import (
 
 func check(err error) {
 	if err != nil {
-		log.Print(err, line)
+		log.Print(err)
 		panic(err)
 	}
 }
@@ -30,7 +30,9 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 	b, err := readBody(r)
 	check(err)
 
-	var d draft
+	//TODO: retrieve user, currently default
+
+	var d Draft
 	err = json.Unmarshal(b, &d)
 	check(err)
 
@@ -43,3 +45,47 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "saved")
 
 }
+
+func readAllHandler(w http.ResponseWriter, r *http.Request) {
+
+	/*b, err := readBody(r)
+	check(err)*/
+
+	//TODO: retrieve user, currently default
+	u := 0
+
+	drafts := make([]*Draft, 0, 10)
+	drafts, err := readAllDAO(u) //TODO: Pagination
+	check(err)
+
+	resp, err := json.Marshal(drafts)
+	check(err)
+
+	fmt.Fprintf(w, string(resp))
+
+}
+
+/*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*/
