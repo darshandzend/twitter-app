@@ -15,6 +15,17 @@ func check(err error) {
 	}
 }
 
+func makeHandler(f func(w http.ResponseWriter, r *http.Request) error) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Recieved %s %s", r.Method, r.URL)
+		err := f(w, r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Printf("Handling %q: %v", r.RequestURI, err)
+		}
+	}
+}
+
 func readBody(r *http.Request) ([]byte, error) {
 	b := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(b)
@@ -25,7 +36,7 @@ func readBody(r *http.Request) ([]byte, error) {
 	return b, nil
 }
 
-func createHandler(w http.ResponseWriter, r *http.Request) {
+func createHandler(w http.ResponseWriter, r *http.Request) error {
 
 	b, err := readBody(r)
 	check(err)
@@ -39,14 +50,18 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 	err = validateDraft(d)
 	check(err)
 
-	err = createDraftDAO(d)
+	id, err := createDraftDAO(d)
 	check(err)
 
-	fmt.Fprintf(w, "saved")
+	resp, err := json.Marshal(id)
+
+	fmt.Fprintf(w, string(resp))
+
+	return err
 
 }
 
-func readAllHandler(w http.ResponseWriter, r *http.Request) {
+func readAllHandler(w http.ResponseWriter, r *http.Request) error {
 
 	/*b, err := readBody(r)
 	check(err)*/
@@ -63,6 +78,28 @@ func readAllHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, string(resp))
 
+	return err
+}
+
+func readHandler(w http.ResponseWriter, r *http.Request) error {
+
+	u := 0
+
+	//validate request
+	id := r.URL.Query()["id"][0]
+
+	//validate
+
+	d, err := readDAO(id, u)
+	if err != nil {
+		return err
+	}
+	resp, err := json.Marshal(d)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(w, string(resp))
+	return err
 }
 
 /*

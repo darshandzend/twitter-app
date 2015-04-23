@@ -6,8 +6,9 @@ import (
 
 func main() {
 
-	http.HandleFunc("/create", createHandler)
-	http.HandleFunc("/readall", readAllHandler)
+	http.HandleFunc("/create", makeHandler(createHandler))
+	http.HandleFunc("/readall", makeHandler(readAllHandler))
+	http.HandleFunc("/read", makeHandler(readHandler))
 
 	http.ListenAndServe(":8080", nil)
 }

@@ -6,6 +6,6 @@ type User struct {
 
 type Draft struct {
 	Id     string `json:"id"`
-	UserId string `json:"user_id"`
+	UserId string `json:"-"`
 	Text   string `json:"text"`
 }
