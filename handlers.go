@@ -6,14 +6,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 )
-
-func check(err error) {
-	if err != nil {
-		log.Print(err)
-		panic(err)
-	}
-}
 
 func makeHandler(f func(w http.ResponseWriter, r *http.Request) error) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -32,52 +26,65 @@ func readBody(r *http.Request) ([]byte, error) {
 	if err != nil && err != io.EOF {
 		return nil, err
 	}
-	log.Print(string(b))
+	log.Print("Request body:\n %s", string(b))
 	return b, nil
 }
 
 func createHandler(w http.ResponseWriter, r *http.Request) error {
 
 	b, err := readBody(r)
-	check(err)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
 
 	//TODO: retrieve user, currently default
+	u := 0
 
 	var d Draft
 	err = json.Unmarshal(b, &d)
-	check(err)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
 
 	err = validateDraft(d)
-	check(err)
+	if err != nil {
+		return err
+	}
 
-	id, err := createDraftDAO(d)
-	check(err)
+	id, err := createDraftDAO(d, strconv.Itoa(u))
+	if err != nil {
+		return err
+	}
 
 	resp, err := json.Marshal(id)
+	if err != nil {
+		return err
+	}
 
 	fmt.Fprintf(w, string(resp))
-
 	return err
 
 }
 
 func readAllHandler(w http.ResponseWriter, r *http.Request) error {
 
-	/*b, err := readBody(r)
-	check(err)*/
-
 	//TODO: retrieve user, currently default
 	u := 0
 
 	drafts := make([]*Draft, 0, 10)
-	drafts, err := readAllDAO(u) //TODO: Pagination
-	check(err)
+	drafts, err := readAllDAO(strconv.Itoa(u)) //TODO: Pagination
+	if err != nil {
+		return err
+	}
 
 	resp, err := json.Marshal(drafts)
-	check(err)
+	if err != nil {
+		return err
+	}
 
 	fmt.Fprintf(w, string(resp))
-
 	return err
 }
 
@@ -85,12 +92,11 @@ func readHandler(w http.ResponseWriter, r *http.Request) error {
 
 	u := 0
 
-	//validate request
 	id := r.URL.Query()["id"][0]
 
 	//validate
 
-	d, err := readDAO(id, u)
+	d, err := readDAO(id, strconv.Itoa(u))
 	if err != nil {
 		return err
 	}
